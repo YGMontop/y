@@ -1,37 +1,333 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>YGM's Portfolio</title>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Little Dairy Chef</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link id='favicon' rel="shortcut icon" href="./logo.png" type="image/x-png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-      h1 {
-        color: red;
-        text-align: center;
-      }
-      h2 {
-        color: blue;
-        text-align: center;
-      }
-      p {
-        text-align: justify;
-        margin: 0 auto;
-        max-width: 600px;
-      }
-      iframe {
-        display: block;
-        margin: 0 auto;
-        width: 800px;
-        height: 600px;
-      }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        body {
+            font-family: 'Fredoka One', sans-serif;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: #009af0;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header img {
+            width: 150px;
+            height: auto;
+            margin-right: 1rem;
+        }
+
+        header h1 {
+            color: #fff;
+            margin: 0;
+            font-size: 2em;
+        }
+
+        nav ul {
+            display: inline;
+            list-style-type: none;
+            padding: 0;
+        }
+
+        nav li {
+            display: inline;
+            margin-left: 1rem;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 600px) {
+            .a {
+                display: none;
+            }
+            header h1 {
+                font-size: x-large;
+            }
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            color: #fff;
+        }
     </style>
-  </head>
-  <body>
-    <h1>YGM's portfolio</h1>
-    <p>
-      Meet YGM, a talented Roblox developer with 3 years of experience. YGM has created multiple successful games on the Roblox platform, including a popular game with over 1.7 million visits. He is skilled in Lua programming. YGM is passionate about creating engaging and immersive experiences for players, and he is always pushing the boundaries of what is possible in Roblox with a quick work and way more. 
-    </p>
-    <h2>Latest Work</h2>
-    <iframe src="https://www.youtube.com/embed/m5wp2uvtU8Q"></iframe>
-    <h2>Contact Me</h2>
-    <p>Feel free to DM me on Discord YGM#6451</p>
-  </body>
+</head>
+<body class="bg-green-100">
+    <header>
+        <img class="a" src="logo.png" alt="Little Dairy Chef Logo">
+        <h1 >Little Dairy Chef⠀</h1>
+        <img src="logo.png" alt="Little Dairy Chef Logo">
+    </header>
+    <div class="container mx-auto py-8">
+        <div id="item-cards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+    </div>
+    <center>
+        <form id="order-form" class="flex flex-col gap-4 p-4">
+            <input type="text" id="name" placeholder="Your Name" class="p-2 border rounded" aria-label="Your Name">
+            <input type="text" id="Number" placeholder="Phone Number" class="p-2 border rounded" aria-label="Phone Number">
+            <input type="text" id="Additional_text" placeholder="Additional Message" class="p-2 border rounded" aria-label="Additional Message">
+            <label id="Total" class="text-lg font-bold">Total: 0</label>
+        </form>
+    </center>
+    <div id="cart-summary" class="p-4"></div>
+    <br><hr>
+    <div id="loading" class="loading">Processing...</div>
+
+    <script>
+        const items = [
+                { name: "1L yoghurt", type: "piece", price: 4300, image: "./Pics/1L-yoghurt.jpg" },
+                { name: "1.5L yoghurt", type: "piece", price: 6200, image: "./Pics/1.5L-yoghurt.jpg" },
+                { name: "0.25L yoghurt", type: "piece", price: 1500, image: "./Pics/0.25L-yoghurt.jpg" },
+                { name: "0.5L yoghurt", type: "piece", price: 2600, image: "./Pics/0.5L-yoghurt.jpg" },
+                { name: "Mozzarella", type: "kg", price: 1500, image: "./Pics/mozzarella.jpg" },
+                { name: "Gouda", type: "kg", price: 1500, image: "./Pics/gouda.jpg" },
+            ];
+        let cart = [];
+
+        const webhookURL = "https://discord.com/api/webhooks/1267214910593564714/sDfcOLK6H1woD93dmsKCiFiOQkBmqR4zjpPy1rKAtDOhXyRNO7v82U-7zkFj4q5mFnyj";
+
+        const TotalPriceLabel = document.getElementById("Total");
+        const loadingIndicator = document.getElementById("loading");
+
+        function createItemCards() {
+            const itemCardsContainer = document.getElementById("item-cards");
+            itemCardsContainer.innerHTML = ""; // Clear existing cards
+
+            items.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "bg-white shadow-md rounded-lg overflow-hidden";
+
+                const img = document.createElement("img");
+                img.src = item.image;
+                img.alt = item.name;
+                img.className = "w-full h-48 object-cover";
+
+                const cardBody = document.createElement("div");
+                cardBody.className = "p-4";
+
+                const itemName = document.createElement("h2");
+                itemName.className = "text-xl font-bold mb-2";
+                itemName.textContent = item.name;
+
+                const itemPrice = document.createElement("p");
+                itemPrice.className = "text-gray-700";
+                itemPrice.textContent = `Price: ${item.price.toLocaleString()} ${item.type === "kg" ? "per kg" : "each"}`;
+
+                const quantityContainer = document.createElement("div");
+                quantityContainer.className = "flex items-center gap-2 mt-2";
+
+                const quantityInput = document.createElement("input");
+                quantityInput.type = "number";
+                quantityInput.value = 1;
+                quantityInput.min = 1;
+                quantityInput.className = "p-2 border rounded w-20";
+
+                const addToCartButton = document.createElement("button");
+                addToCartButton.className = "bg-blue-500 text-white px-4 py-2 rounded";
+                addToCartButton.textContent = "Add to Cart";
+                addToCartButton.addEventListener("click", () => addToCart(item, quantityInput.value));
+
+                quantityContainer.appendChild(quantityInput);
+                quantityContainer.appendChild(addToCartButton);
+
+                cardBody.appendChild(itemName);
+                cardBody.appendChild(itemPrice);
+                cardBody.appendChild(quantityContainer);
+                card.appendChild(img);
+                card.appendChild(cardBody);
+                itemCardsContainer.appendChild(card);
+            });
+        }
+
+        function addToCart(item, quantity) {
+            quantity = parseFloat(quantity);
+            if (item.type == "kg") {
+                if (!quantity || quantity < 0.05) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid quantity',
+                    text: 'Please enter a valid quantity.',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                });
+                return;
+            }
+            }
+            if (item.type == "piece") {
+                if (!quantity || quantity < 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid quantity',
+                    text: 'Please enter a valid quantity.',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                });
+                return;
+            }
+            }
+            
+
+            const cartItem = { ...item, quantity };
+            cart.push(cartItem);
+            updateTotalPrice();
+            createCartSummary();
+            Swal.fire({
+                icon: 'success',
+                title: 'Added to Cart',
+                text: `${item.name} has been added to your cart.`,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+            });
+        }
+
+        function updateTotalPrice() {
+            let totalPrice = 0;
+            cart.forEach(item => {
+                totalPrice += item.price * item.quantity;
+            });
+            const formattedTotalPrice = Number(totalPrice).toLocaleString();
+            TotalPriceLabel.textContent = "Total: " + formattedTotalPrice;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateTotalPrice();
+            createCartSummary();
+        }
+
+        function createCartSummary() {
+            const cartSummaryContainer = document.getElementById("cart-summary");
+            cartSummaryContainer.innerHTML = ""; // Clear existing summary
+
+            if (cart.length === 0) {
+                cartSummaryContainer.textContent = "Your cart is empty.";
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "flex justify-between items-center p-2 border-b";
+
+                const itemDetails = document.createElement("span");
+                itemDetails.textContent = `${item.name} (x${item.quantity}) - ${item.price.toLocaleString()}`;
+
+                const removeButton = document.createElement("button");
+                removeButton.className = "bg-red-500 text-white px-2 py-1 rounded";
+                removeButton.textContent = "Remove";
+                removeButton.addEventListener("click", () => removeFromCart(index));
+
+                itemDiv.appendChild(itemDetails);
+                itemDiv.appendChild(removeButton);
+                cartSummaryContainer.appendChild(itemDiv);
+            });
+
+            const checkoutButton = document.createElement("button");
+            checkoutButton.className = "bg-green-500 text-white px-4 py-2 rounded mt-4";
+            checkoutButton.textContent = "Checkout";
+            checkoutButton.addEventListener("click", () => order());
+
+            cartSummaryContainer.appendChild(checkoutButton);
+        }
+
+        function validateOrderForm() {
+            const name = document.getElementById("name").value.trim();
+            const phone = document.getElementById("Number").value.trim();
+            const additionalText = document.getElementById("Additional_text").value.trim();
+
+            if (!name || !phone) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Form Validation',
+                    text: 'Please fill out all required fields.',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                });
+                return false;
+            }
+            return true;
+        }
+
+        function order() {
+            if (!validateOrderForm()) return;
+
+            loadingIndicator.style.display = "block";
+
+            fetch(webhookURL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    content: "@here New Order",
+                    embeds: [
+                        {
+                            title: "Order Details",
+                            fields: [
+                                { name: "Name", value: document.getElementById("name").value, inline: true },
+                                { name: "Phone", value: document.getElementById("Number").value, inline: true },
+                                { name: "Additional Message", value: document.getElementById("Additional_text").value || "None", inline: false },
+                                { name: "Total", value: TotalPriceLabel.textContent, inline: false },
+                                { name: "Cart Items", value: cart.map(item => `${item.name} (x${item.quantity}) - ${item.price.toLocaleString()}`).join("\n"), inline: false }
+                            ],
+                            color: 0x00ff00 // Green
+                        }
+                    ]
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Order Placed',
+                    text: 'Your order has been successfully placed!',
+                    confirmButtonColor: '#3085d6',
+                });
+                cart = [];
+                updateTotalPrice();
+                createCartSummary();
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Order Failed',
+                    text: `An error occurred: ${error.message}`,
+                    confirmButtonColor: '#3085d6',
+                });
+            })
+            .finally(() => {
+                loadingIndicator.style.display = "none";
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", createItemCards);
+    </script>
+</body>
 </html>
